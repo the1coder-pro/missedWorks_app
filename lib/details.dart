@@ -78,10 +78,10 @@ class _DetailsPageState extends State<DetailsPage> {
             children: [
               Center(
                   child: Text(widget.orderer.name,
-                      style: Theme.of(context).textTheme.displayLarge)),
-              const SizedBox(height: 10),
+                      style: Theme.of(context).textTheme.displayMedium)),
+              const SizedBox(height: 20),
               Text("جميع الأعمال",
-                  style: Theme.of(context).textTheme.displaySmall),
+                  style: Theme.of(context).textTheme.headlineMedium),
               DataTable(
                   columns: const [
                     DataColumn(label: Text("#")),
@@ -98,21 +98,8 @@ class _DetailsPageState extends State<DetailsPage> {
                           ]))
                       .toList()),
               const SizedBox(height: 10),
-              Visibility(
-                visible: unselectedOrders.isNotEmpty,
-                child: FilledButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  MyList(widget.orderer, isar: widget.isar)));
-                    },
-                    child: const Text("تسليم عمل")),
-              ),
-              const SizedBox(height: 10),
               Text("الأعمال المستلمة",
-                  style: Theme.of(context).textTheme.displaySmall),
+                  style: Theme.of(context).textTheme.headlineMedium),
               DataTable(
                   columns: const [
                     DataColumn(label: Text("العمل")),
@@ -131,8 +118,9 @@ class _DetailsPageState extends State<DetailsPage> {
                                 .format(order.date!)))
                           ]))
                       .toList()),
+              const SizedBox(height: 10),
               Text("الأعمال المتبقية",
-                  style: Theme.of(context).textTheme.displaySmall),
+                  style: Theme.of(context).textTheme.headlineMedium),
               DataTable(
                   columns: const [
                     DataColumn(label: Text("العمل")),
@@ -146,6 +134,19 @@ class _DetailsPageState extends State<DetailsPage> {
                             DataCell(Text(order.cost.toString())),
                           ]))
                       .toList()),
+              const SizedBox(height: 10),
+              Visibility(
+                visible: unselectedOrders.isNotEmpty,
+                child: FilledButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  MyList(widget.orderer, isar: widget.isar)));
+                    },
+                    child: const Text("تسليم عمل")),
+              ),
             ],
           ),
         ),

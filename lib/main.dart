@@ -12,6 +12,8 @@ import 'prefs.dart';
 import 'register.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'search_widget.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final dir = await getApplicationSupportDirectory();
@@ -38,7 +40,7 @@ class MyApp extends StatelessWidget {
           themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
           theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.pink,
+                seedColor: Colors.lightBlue,
                 brightness:
                     themeProvider.isDark ? Brightness.dark : Brightness.light,
               ),
@@ -97,9 +99,21 @@ class _MyHomePageState extends State<MyHomePage> {
           centerTitle: true,
           backgroundColor: Theme.of(context).colorScheme.background,
           title: Text(selectedPageTitle(selectedPage)),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                showSearch(
+                  context: context,
+                  delegate: OrdererSearch(
+                      widget.isar.orderers.where().findAllSync(), widget.isar),
+                );
+              },
+            ),
+          ],
         ),
         body: pageSelector(context, selectedPage),
-        endDrawer: Drawer(
+        drawer: Drawer(
           child: ListView(
             padding: EdgeInsets.zero,
             children: <Widget>[
@@ -287,35 +301,75 @@ class _RecipientDetailsPageState extends State<RecipientDetailsPage> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.recipient.name),
-        ),
-        body: StreamBuilder<List<AssignedOrder>>(
-          stream: widget.isar.assignedOrders
-              .where()
-              .filter()
-              .recipient((q) => q.idEqualTo(widget.recipient.id))
-              .watch(fireImmediately: true),
-          builder: (_, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else {
-              if (snapshot.data!.isEmpty) {
-                return const Center(child: Text("لا توجد أعمال مسجلة."));
-              }
-              return ListView.builder(
-                itemCount: snapshot.data!.length,
-                itemBuilder: (context, index) {
-                  AssignedOrder assignedOrder = snapshot.data![index];
-                  return ListTile(
-                    title: Text(assignedOrder.order.value!.title),
-                    subtitle: Text(
-                        "${assignedOrder.order.value!.author.value!.name} - ${intl.DateFormat('dd/MM/yyyy').format(assignedOrder.date!)}"),
-                    trailing: Text(assignedOrder.amount.toString()),
-                  );
+            // title: Text(),
+            ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Center(
+                  child: Text(widget.recipient.name,
+                      style: Theme.of(context).textTheme.headlineLarge)),
+            ),
+            Center(
+                child: Text(widget.recipient.idNumber.toString(),
+                    style: Theme.of(context).textTheme.headlineSmall)),
+            Expanded(
+              flex: 2,
+              child: StreamBuilder<List<AssignedOrder>>(
+                stream: widget.isar.assignedOrders
+                    .where()
+                    .filter()
+                    .recipient((q) => q.idEqualTo(widget.recipient.id))
+                    .watch(fireImmediately: true),
+                builder: (_, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else {
+                    if (snapshot.data!.isEmpty) {
+                      return const Center(child: Text("لا توجد أعمال مسجلة."));
+                    }
+
+                    // make a datatable to show the assigned orders
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(columns: const [
+                        DataColumn(label: Text("العمل")),
+                        DataColumn(label: Text("المؤلف")),
+                        DataColumn(label: Text("التاريخ")),
+                        DataColumn(label: Text("الكمية")),
+                        DataColumn(label: Text("السعر")),
+                      ], rows: [
+                        for (var assignedOrder in snapshot.data!)
+                          DataRow(cells: [
+                            DataCell(Text(assignedOrder.order.value!.title)),
+                            DataCell(Text(
+                                assignedOrder.order.value!.author.value!.name)),
+                            DataCell(Text(intl.DateFormat('dd/MM/yyyy')
+                                .format(assignedOrder.date!))),
+                            DataCell(Text(assignedOrder.amount.toString())),
+                            DataCell(Text(assignedOrder.cost.toString())),
+                          ])
+                      ]),
+                    );
+
+                    // return ListView.builder(
+                    //   itemCount: snapshot.data!.length,
+                    //   itemBuilder: (context, index) {
+                    //     AssignedOrder assignedOrder = snapshot.data![index];
+                    //     return ListTile(
+                    //       title: Text(assignedOrder.order.value!.title),
+                    //       subtitle: Text(
+                    //           "${assignedOrder.order.value!.author.value!.name} - ${intl.DateFormat('dd/MM/yyyy').format(assignedOrder.date!)}"),
+                    //       trailing: Text(assignedOrder.amount.toString()),
+                    //     );
+                    //   },
+                    // );
+                  }
                 },
-              );
-            }
-          },
+              ),
+            )
+          ],
         ),
       ),
     );
