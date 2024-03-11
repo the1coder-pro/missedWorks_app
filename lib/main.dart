@@ -5,8 +5,10 @@ import 'package:missed_works_app/order.dart';
 import 'package:missed_works_app/orderer.dart';
 import 'package:missed_works_app/recipient.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 
 import 'details.dart';
+import 'prefs.dart';
 import 'register.dart';
 import 'package:intl/intl.dart' as intl;
 
@@ -27,13 +29,23 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'تطبيق الأعمال النيابيية',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.pink),
-          useMaterial3: true),
-      home: MyHomePage(isar: isar),
+    return ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      builder: (context, _) => Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) => MaterialApp(
+          title: 'تطبيق الأعمال النيابيية',
+          debugShowCheckedModeBanner: false,
+          themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
+          theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: Colors.pink,
+                brightness:
+                    themeProvider.isDark ? Brightness.dark : Brightness.light,
+              ),
+              useMaterial3: true),
+          home: MyHomePage(isar: isar),
+        ),
+      ),
     );
   }
 }
@@ -69,6 +81,8 @@ class _MyHomePageState extends State<MyHomePage> {
         return FirstSection(widget: widget);
       case 1:
         return SecondSection(widget: widget);
+      case 2:
+        return SettingsSection(widget: widget);
       default:
         return FirstSection(widget: widget);
     }
@@ -134,15 +148,18 @@ class _MyHomePageState extends State<MyHomePage> {
             ],
           ),
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => RegisterPage(isar: widget.isar)));
-          },
-          tooltip: 'Increment',
-          child: const Icon(Icons.add),
+        floatingActionButton: Visibility(
+          visible: selectedPage == 0,
+          child: FloatingActionButton(
+            onPressed: () async {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => RegisterPage(isar: widget.isar)));
+            },
+            tooltip: 'Increment',
+            child: const Icon(Icons.add),
+          ),
         ),
       ),
     );
@@ -301,6 +318,32 @@ class _RecipientDetailsPageState extends State<RecipientDetailsPage> {
           },
         ),
       ),
+    );
+  }
+}
+
+class SettingsSection extends StatelessWidget {
+  const SettingsSection({
+    super.key,
+    required this.widget,
+  });
+
+  final MyHomePage widget;
+
+  @override
+  Widget build(BuildContext context) {
+    ThemeProvider themeProvider = Provider.of<ThemeProvider>(context);
+    // dark mode
+    return ListView(
+      children: [
+        SwitchListTile(
+          title: const Text("الوضع المظلم"),
+          value: themeProvider.isDark,
+          onChanged: (value) {
+            themeProvider.updateTheme(value);
+          },
+        )
+      ],
     );
   }
 }
