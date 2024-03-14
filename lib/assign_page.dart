@@ -1,28 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:isar/isar.dart';
-
+import 'package:missed_works_app/prefs.dart';
+import 'package:provider/provider.dart';
 import 'assigned_order.dart';
 import 'order.dart';
 import 'orderer.dart';
 import 'recipient.dart';
 
-class MyList extends StatefulWidget {
-  final Isar isar;
-  final Orderer orderer;
-
-  const MyList(this.orderer, {super.key, required this.isar});
+class AssignPage extends StatefulWidget {
+  const AssignPage({super.key});
 
   @override
-  State<MyList> createState() => _MyListState();
+  State<AssignPage> createState() => _AssignPageState();
 }
 
-class _MyListState extends State<MyList> {
+class _AssignPageState extends State<AssignPage> {
   final List<Item> _items = [];
 
   TextEditingController nameController = TextEditingController();
   TextEditingController idNumberController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
+
+  List<DropdownMenuItem<Recipient>> recipients = [];
+
+  Recipient? _recipient;
 
   void addItem() {
     setState(() {
@@ -38,6 +39,8 @@ class _MyListState extends State<MyList> {
   }
 
   void saveData() async {
+    var mainDatabase = context.read<MainDatabase>();
+
     final newRecipient = Recipient()
       ..name = nameController.text
       ..idNumber = idNumberController.text
@@ -51,28 +54,53 @@ class _MyListState extends State<MyList> {
         ..amount = int.parse(item.text1)
         ..cost = double.parse(item.text2)
         ..date = DateTime.now()
-        ..recipient.value = newRecipient;
+        ..recipient.value = nameController.text.isNotEmpty
+            ? newRecipient
+            : _recipient ?? newRecipient;
 
       orders.add(newOrder);
       debugPrint(newOrder.order.value!.title);
     }
 
-    await widget.isar.writeTxn(() async {
-      await widget.isar.recipients.put(newRecipient);
-      for (var order in orders) {
-        debugPrint(order.order.value!.title);
-        await widget.isar.assignedOrders.put(order);
-        newRecipient.assignedOrders.add(order);
+    mainDatabase.saveDataAfterAddingRecipient(
+        nameController.text.isNotEmpty
+            ? newRecipient
+            : _recipient ?? newRecipient,
+        orders);
+  }
 
-        await order.order.save();
-        await order.recipient.save();
-        await newRecipient.assignedOrders.save();
-      }
-    }).then((value) => debugPrint(value.toString()));
+  // get the list of recipients
+  List<DropdownMenuItem<Recipient>> getRecipients() {
+    List<DropdownMenuItem<Recipient>> items = [];
+    for (var recipient in context.read<MainDatabase>().currentRecipients) {
+      items.add(DropdownMenuItem(
+        alignment: Alignment.center,
+        value: recipient,
+        child:
+            Center(child: Text("${recipient.name} (${recipient.phoneNumber})")),
+      ));
+    }
+    return items;
+  }
+
+  @override
+  void initState() {
+    recipients = getRecipients();
+    if (recipients.isNotEmpty) {
+      _recipient = recipients.first.value;
+    }
+    super.initState();
+  }
+
+  void deleteItem(int index) {
+    setState(() {
+      _items.removeAt(index);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final db = context.read<MainDatabase>();
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -83,6 +111,7 @@ class _MyListState extends State<MyList> {
               icon: const Icon(Icons.check),
               onPressed: () async {
                 saveData();
+
                 if (context.mounted) {
                   Navigator.pop(context);
                 }
@@ -95,23 +124,68 @@ class _MyListState extends State<MyList> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                      hintText: "الإسم", border: OutlineInputBorder())),
+              Center(
+                child: DataTable(
+                    border:
+                        TableBorder.all(borderRadius: BorderRadius.circular(5)),
+                    columns: ['العمل', 'الكمية', 'السعر']
+                        .map((title) => DataColumn(
+                            label: Center(
+                                child: Text(title,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)))))
+                        .toList(),
+                    rows: db.currentOrdererUnasssignedOrders
+                        .map((order) => DataRow(cells: [
+                              DataCell(Center(child: Text(order.title))),
+                              DataCell(
+                                  Center(child: Text(order.amount.toString()))),
+                              DataCell(
+                                  Center(child: Text(order.cost.toString()))),
+                            ]))
+                        .toList()),
+              ),
+              ExpansionTile(
+                title: const Text("إضافة مستلم"),
+                children: [
+                  TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                          hintText: "الإسم", border: OutlineInputBorder())),
+                  const SizedBox(height: 10),
+                  TextField(
+                      controller: idNumberController,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: const InputDecoration(
+                          hintText: "رقم الهوية",
+                          border: OutlineInputBorder())),
+                  const SizedBox(height: 10),
+                  TextField(
+                      controller: phoneController,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: const InputDecoration(
+                          hintText: "رقم الهاتف",
+                          border: OutlineInputBorder())),
+                ],
+              ),
               const SizedBox(height: 10),
-              TextField(
-                  controller: idNumberController,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(
-                      hintText: "رقم الهوية", border: OutlineInputBorder())),
-              const SizedBox(height: 10),
-              TextField(
-                  controller: phoneController,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(
-                      hintText: "رقم الهاتف", border: OutlineInputBorder())),
-              const SizedBox(height: 10),
+              if (recipients.isNotEmpty)
+                DropdownButton<Recipient>(
+                  alignment: Alignment.center,
+                  style: TextStyle(
+                      fontFamily: "Rubik",
+                      fontSize: 15,
+                      color: Theme.of(context).colorScheme.onBackground),
+                  hint: const Text('اختر المستلم'),
+                  items: recipients,
+                  value: _recipient,
+                  onChanged: (value) {
+                    debugPrint(value!.name);
+                    setState(() {
+                      _recipient = value;
+                    });
+                  },
+                ),
               ListTile(
                 title: const Text("الأعمال"),
                 trailing: IconButton(
@@ -124,7 +198,7 @@ class _MyListState extends State<MyList> {
                   itemCount: _items.length,
                   itemBuilder: (context, index) {
                     return MyListTile(
-                      orderer: widget.orderer,
+                      orderer: db.currentOrderer!,
                       item: _items[index],
                       onChanged: (value, text1, text2) {
                         setState(() {
@@ -168,7 +242,6 @@ class MyListTile extends StatefulWidget {
 }
 
 class _MyListTileState extends State<MyListTile> {
-  // final List<String> _dropdownItems = ['Option 1', 'Option 2', 'Option 3'];
   Order? _selectedValue;
   final TextEditingController _text1Controller = TextEditingController();
   final TextEditingController _text2Controller = TextEditingController();
@@ -183,6 +256,7 @@ class _MyListTileState extends State<MyListTile> {
 
   @override
   Widget build(BuildContext context) {
+    final db = context.read<MainDatabase>();
     return ListTile(
       title: Padding(
         padding: const EdgeInsets.only(bottom: 10),
@@ -190,11 +264,19 @@ class _MyListTileState extends State<MyListTile> {
           children: [
             DropdownButton<Order>(
               value: _selectedValue,
+              alignment: Alignment.center,
+              style: const TextStyle(fontFamily: "Rubik", fontSize: 15),
               hint: const Text('اختر العمل'),
-              items: widget.orderer.orders.map((Order value) {
+              items: db.currentOrdererUnasssignedOrders.map((Order value) {
                 return DropdownMenuItem<Order>(
+                  alignment: Alignment.center,
                   value: value,
-                  child: Text(value.title),
+                  child: Center(
+                      child: Text(
+                    value.title,
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onBackground),
+                  )),
                 );
               }).toList(),
               onChanged: (value) {
@@ -208,6 +290,8 @@ class _MyListTileState extends State<MyListTile> {
             const SizedBox(width: 10),
             Expanded(
               child: TextField(
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                keyboardType: TextInputType.number,
                 controller: _text1Controller,
                 decoration: const InputDecoration(
                     hintText: 'الكمية', border: OutlineInputBorder()),
@@ -220,6 +304,8 @@ class _MyListTileState extends State<MyListTile> {
       ),
       subtitle: TextField(
         controller: _text2Controller,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         decoration: const InputDecoration(
             hintText: 'السعر', border: OutlineInputBorder()),
         onChanged: (text) =>
