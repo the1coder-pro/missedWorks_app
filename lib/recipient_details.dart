@@ -116,7 +116,7 @@ class _RecipientDetailsPageState extends State<RecipientDetailsPage> {
                   ]),
                 )
               else
-                Center(child: const Text("لا توجد أعمال مسجلة"))
+                const Center(child: Text("لا توجد أعمال مسجلة"))
               // Expanded(
               //   flex: 2,
               //   child: StreamBuilder<List<AssignedOrder>>(

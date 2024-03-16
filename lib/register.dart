@@ -20,6 +20,8 @@ class _RegisterPageState extends State<RegisterPage> {
   TextEditingController idNumberController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
 
+  List<Map> mapsOfOrders = [];
+
   // fill controllers with orderer's data if orderer is not null
   void fillControllers() {
     if (widget.orderer != null) {
@@ -28,10 +30,19 @@ class _RegisterPageState extends State<RegisterPage> {
       phoneController.text = widget.orderer!.phoneNumber!;
 
       for (var order in widget.orderer!.orders) {
+        mapsOfOrders.add({
+          'id': order.id,
+          'title': order.title,
+          'amount': order.amount,
+          'cost': order.cost,
+          'assignedOrders': order.assignedOrders.toList(),
+        });
+      }
+      for (var map in mapsOfOrders) {
         _listTileData.add([
-          TextEditingController(text: order.cost.toString()),
-          TextEditingController(text: order.amount.toString()),
-          TextEditingController(text: order.title),
+          TextEditingController(text: map['cost'].toString()),
+          TextEditingController(text: map['amount'].toString()),
+          TextEditingController(text: map['title']),
         ]);
       }
     }
@@ -45,7 +56,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    final mainDatabase = context.watch<MainDatabase>();
+    final mainDatabase = context.read<MainDatabase>();
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -67,17 +78,32 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     List<Order> orders = [];
 
-                    for (var controllers in _listTileData) {
-                      final newOrder = Order()
-                        ..title = controllers[2].text
-                        ..amount = int.parse(controllers[1].text)
-                        ..cost = double.parse(controllers[0].text)
-                        ..author.value = newOrderer;
-
-                      orders.add(newOrder);
+                    // check for new orders and changed orders and update the mapsOfOrders
+                    for (var map in mapsOfOrders) {
+                      for (var controllers in _listTileData) {
+                        if (map['title'] == controllers[2].text) {
+                          map['cost'] = controllers[0].text;
+                          map['amount'] = controllers[1].text;
+                        }
+                      }
                     }
 
-                    mainDatabase.addOrderer(newOrderer, orders);
+                    // add new orders
+                    for (var controllers in _listTileData) {
+                      // if the order is new add it to the list of map of orders
+                      if (mapsOfOrders.every((element) =>
+                          element['title'] != controllers[2].text)) {
+                        mapsOfOrders.add({
+                          'title': controllers[2].text,
+                          'amount': controllers[1].text,
+                          'cost': controllers[0].text,
+                          'assignedOrders': [],
+                        });
+                      }
+                    }
+
+                    mainDatabase.addOrderer(newOrderer, orders,
+                        changedOrders: mapsOfOrders);
 
                     debugPrint('updated');
                     if (context.mounted) {
@@ -92,6 +118,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     List<Order> orders = [];
 
+                    // check for new orders and changed orders and update the mapsOfOrders
                     for (var controllers in _listTileData) {
                       final newOrder = Order()
                         ..title = controllers[2].text
@@ -100,16 +127,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         ..author.value = newOrderer;
 
                       orders.add(newOrder);
-                    }
-
-                    // changed orders
-                    List<Order> changedOrders = [];
-                    for (var order in orders) {
-                      if (order.title != '' &&
-                          order.amount != 0 &&
-                          order.cost != 0) {
-                        changedOrders.add(order);
-                      }
                     }
 
                     mainDatabase.addOrderer(newOrderer, orders);
@@ -162,6 +179,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     final controllers = _listTileData[index];
                     return ListTile(
                       title: ThreeTextFields(
+                          update: widget.orderer != null,
                           controller1: controllers[0],
                           controller2: controllers[1],
                           controller3: controllers[2],
@@ -199,9 +217,11 @@ class ThreeTextFields extends StatelessWidget {
   final TextEditingController controller2;
   final TextEditingController controller3;
   final void Function()? delete;
+  final bool update;
 
   const ThreeTextFields(
       {super.key,
+      required this.update,
       required this.controller1,
       required this.controller2,
       required this.controller3,
@@ -211,14 +231,16 @@ class ThreeTextFields extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(
-          flex: 3,
-          child: TextField(
-            decoration: const InputDecoration(
-                hintText: "العمل", border: OutlineInputBorder()),
-            controller: controller3,
-          ),
-        ),
+        update
+            ? Text(controller3.text)
+            : Expanded(
+                flex: 3,
+                child: TextField(
+                  decoration: const InputDecoration(
+                      hintText: "العمل", border: OutlineInputBorder()),
+                  controller: controller3,
+                ),
+              ),
         const SizedBox(width: 5.0),
         Expanded(
           flex: 2,

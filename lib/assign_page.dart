@@ -170,7 +170,10 @@ class _AssignPageState extends State<AssignPage> {
               ),
               const SizedBox(height: 10),
               if (recipients.isNotEmpty)
-                DropdownButton<Recipient>(
+                DropdownButtonFormField<Recipient>(
+                  decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5))),
                   alignment: Alignment.center,
                   style: TextStyle(
                       fontFamily: "Rubik",
@@ -198,6 +201,7 @@ class _AssignPageState extends State<AssignPage> {
                   itemCount: _items.length,
                   itemBuilder: (context, index) {
                     return MyListTile(
+                      delete: () => deleteItem(index),
                       orderer: db.currentOrderer!,
                       item: _items[index],
                       onChanged: (value, text1, text2) {
@@ -229,12 +233,14 @@ class Item {
 class MyListTile extends StatefulWidget {
   final Item item;
   final Orderer orderer;
+  final void Function() delete;
   final Function(Order?, String, String) onChanged;
 
   const MyListTile(
       {super.key,
       required this.orderer,
       required this.item,
+      required this.delete,
       required this.onChanged});
 
   @override
@@ -258,6 +264,10 @@ class _MyListTileState extends State<MyListTile> {
   Widget build(BuildContext context) {
     final db = context.read<MainDatabase>();
     return ListTile(
+      trailing: IconButton(
+        onPressed: widget.delete,
+        icon: const Icon(Icons.delete),
+      ),
       title: Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: Row(

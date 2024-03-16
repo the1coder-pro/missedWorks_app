@@ -9,6 +9,7 @@ import 'assigned_order.dart';
 import 'order.dart';
 import 'orderer.dart';
 import 'register.dart';
+import 'register_page.dart';
 
 // details page with currentOrderer from mainDatabase
 class DetailsPage extends StatefulWidget {

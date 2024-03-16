@@ -92,60 +92,44 @@ class MainDatabase extends ChangeNotifier {
   }
 
   // add orderer
-  Future<void> addOrderer(Orderer orderer, List<Order> orders) async {
+  Future<void> addOrderer(Orderer orderer, List<Order> orders,
+      {List<Map>? changedOrders}) async {
     await isar.writeTxn(() async {
       // check if orderer is there
       if (orderer.id == null) {
         await isar.orderers.put(orderer);
         for (var order in orders) {
           await isar.orders.put(order);
+          await order.assignedOrders.save();
           await order.author.save();
         }
       } else {
-        // make a variable for the orders and assigned orders
-        List<Order> ordersOfOrderer = orderer.orders.toList();
-        List<AssignedOrder> assignedOrders = [];
-        for (var order in ordersOfOrderer) {
-          await order.assignedOrders.load();
-          assignedOrders.addAll(order.assignedOrders);
-        }
-        await isar.orders
-            .filter()
-            .author((q) => q.idEqualTo(orderer.id))
-            .deleteAll();
-        // remove assigned orders of order
-        await isar.assignedOrders
-            .filter()
-            .order((q) => q.author((q) => q.idEqualTo(orderer.id)))
-            .deleteAll();
-
         await isar.orderers.put(orderer);
+        if (changedOrders != null) {
+          for (var map in changedOrders) {
+            final newOrder = Order()
+              ..id = map['id']
+              ..title = map['title']
+              ..amount = int.parse(map['amount'])
+              ..cost = double.parse(map['cost'])
+              ..author.value = orderer;
 
-        // check what is different between the orders and orders of the orderer and add them to the list of updated orders
-        List<Order> updatedOrders = [];
-        for (var order in orders) {
-          if (ordersOfOrderer.contains(order)) {
-            updatedOrders.add(order);
-          } else {
-            updatedOrders.add(order);
-          }
-        }
+            await isar.orders.put(newOrder);
 
-        for (var order in updatedOrders) {
-          if (order.id != null) {
-            await isar.orders.put(order);
-            await order.author.save();
-            for (var assignedOrder in assignedOrders) {
-              if (assignedOrder.order.value!.id == order.id) {
-                await isar.assignedOrders.put(assignedOrder);
-                await assignedOrder.order.save();
-              }
+            for (AssignedOrder order in map['assignedOrders']) {
+              await isar.assignedOrders.put(order);
+              await order.order.save();
+              await order.recipient.save();
             }
-          } else {
-            await isar.orders.put(order);
-            await order.author.save();
+            await newOrder.assignedOrders.save();
+            await newOrder.author.save();
           }
         }
+        // for (var order in orders) {
+        //   await isar.orders.put(order);
+        //   await order.assignedOrders.save();
+        //   await order.author.save();
+        // }
       }
     });
 

@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:missed_works_app/orderer.dart';
 import 'package:missed_works_app/recipient.dart';
+import 'package:missed_works_app/register.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 // import 'details.dart';
 import 'details_page.dart';
 import 'prefs.dart';
 import 'recipient_details.dart';
-import 'register.dart';
+// import 'register.dart';
 
+import 'register_page.dart';
 import 'register_recipients.dart';
 import 'search_widget.dart';
 import 'package:page_transition/page_transition.dart';
@@ -201,21 +204,50 @@ class _MyHomePageState extends State<MyHomePage> {
                     itemCount: currentOrderers.length,
                     itemBuilder: (context, index) {
                       Orderer orderer = currentOrderers[index];
-                      return ListTile(
-                        leading: CircleAvatar(
+                      return Slidable(
+                        key: Key(orderer.id.toString()),
+                        startActionPane: ActionPane(
+                          // A motion is a widget used to control how the pane animates.
+                          motion: const ScrollMotion(),
+
+                          // A pane can dismiss the Slidable.
+                          // dismissible: DismissiblePane(onDismissed: () {}),
+
+                          // All actions are defined in the children parameter.
+                          children: [
+                            // A SlidableAction can have an icon and/or a label.
+                            SlidableAction(
+                              onPressed: (context) {
+                                // delete
+                                mainDatabase.deleteOrdererWithOrders(orderer);
+                              },
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.error,
+                              foregroundColor: Colors.white,
+                              icon: Icons.delete,
+                              label: 'حذف',
+                            ),
+                          ],
+                        ),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                              child: Align(
+                            alignment: Alignment.topCenter,
                             child: Text(orderer.name[0],
-                                style: const TextStyle(fontSize: 20))),
-                        title: Text(orderer.name),
-                        subtitle: Text(orderer.phoneNumber.toString()),
-                        onTap: () {
-                          // set the orderer
-                          mainDatabase.currentOrderer = orderer;
-                          Navigator.push(
-                              context,
-                              PageTransition(
-                                  type: PageTransitionType.rightToLeft,
-                                  child: const DetailsPage()));
-                        },
+                                style: const TextStyle(fontSize: 20)),
+                          )),
+                          title: Text(orderer.name),
+                          subtitle: Text(orderer.phoneNumber.toString()),
+                          onTap: () {
+                            // set the orderer
+                            mainDatabase.currentOrderer = orderer;
+                            Navigator.push(
+                                context,
+                                PageTransition(
+                                    type: PageTransitionType.rightToLeft,
+                                    child: const DetailsPage()));
+                          },
+                        ),
                       );
                     })
               else
