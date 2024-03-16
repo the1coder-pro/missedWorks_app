@@ -9,7 +9,7 @@ import 'assigned_order.dart';
 import 'order.dart';
 import 'orderer.dart';
 import 'register.dart';
-import 'register_page.dart';
+import 'package:intl/intl.dart' as intl;
 
 // details page with currentOrderer from mainDatabase
 class DetailsPage extends StatefulWidget {
@@ -121,12 +121,17 @@ class _DetailsPageState extends State<DetailsPage> {
                             const SizedBox(height: 20),
                             Center(
                               child: DataTable(
+                                  headingRowHeight: 40,
+                                  headingRowColor:
+                                      MaterialStatePropertyAll<Color>(
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .primaryContainer),
                                   border: TableBorder.all(
                                       color: Theme.of(context)
                                           .colorScheme
                                           .onBackground,
                                       borderRadius: BorderRadius.circular(5)),
-                                  headingRowHeight: 45,
                                   columns: ['العمل', 'الكمية', 'السعر']
                                       .map((title) => DataColumn(
                                           label: Center(
@@ -213,21 +218,25 @@ class _DetailsPageState extends State<DetailsPage> {
                                         child: DataTable(
                                             columns: const [
                                               DataColumn(label: Text("#")),
+                                              DataColumn(label: Text('العمل')),
                                               DataColumn(
                                                   label: Text('المستلم')),
                                               DataColumn(
-                                                  label: Text('العنوان')),
+                                                  label: Text("تاريخ الإستلام",
+                                                      style: TextStyle(
+                                                          letterSpacing: 0))),
                                               DataColumn(label: Text('الكمية')),
                                               DataColumn(label: Text('السعر')),
                                             ],
                                             rows: db
                                                 .currentOrdererAssignedOrders
-                                                .reversed
                                                 .indexed
                                                 .map((order) => DataRow(cells: [
                                                       DataCell(Text(
                                                           (order.$1 + 1)
                                                               .toString())),
+                                                      DataCell(Text(order.$2
+                                                          .order.value!.title)),
                                                       DataCell(
                                                           Text(order.$2.recipient.value!.name,
                                                               style: TextStyle(
@@ -249,8 +258,11 @@ class _DetailsPageState extends State<DetailsPage> {
                                                                       .$2
                                                                       .recipient
                                                                       .value!)))),
-                                                      DataCell(Text(order.$2
-                                                          .order.value!.title)),
+                                                      DataCell(Text(
+                                                          intl.DateFormat(
+                                                                  'dd/MM/yyyy')
+                                                              .format(order
+                                                                  .$2.date!))),
                                                       DataCell(Text(order
                                                           .$2.amount
                                                           .toString())),

@@ -110,8 +110,8 @@ class MainDatabase extends ChangeNotifier {
             final newOrder = Order()
               ..id = map['id']
               ..title = map['title']
-              ..amount = int.parse(map['amount'])
-              ..cost = double.parse(map['cost'])
+              ..amount = int.parse(map['amount'].toString())
+              ..cost = double.parse(map['cost'].toString())
               ..author.value = orderer;
 
             await isar.orders.put(newOrder);
@@ -121,20 +121,31 @@ class MainDatabase extends ChangeNotifier {
               await order.order.save();
               await order.recipient.save();
             }
+
             await newOrder.assignedOrders.save();
             await newOrder.author.save();
           }
         }
-        // for (var order in orders) {
-        //   await isar.orders.put(order);
-        //   await order.assignedOrders.save();
-        //   await order.author.save();
-        // }
       }
     });
 
     await fetchOrderers();
     await fetchOrderer(orderer.id!);
+  }
+
+  // delete orders
+  Future<void> deleteOrders(List<Order> orders) async {
+    await isar.writeTxn(() async {
+      for (var order in orders) {
+        await isar.assignedOrders
+            .filter()
+            .order((q) => q.idEqualTo(order.id))
+            .deleteAll();
+      }
+      await isar.orders.deleteAll(orders.map((e) => e.id!).toList());
+    });
+
+    await fetchOrderer(currentOrderer!.id!);
   }
 
   // delete orderer with his orders and assigned orders
@@ -281,16 +292,5 @@ class MainDatabase extends ChangeNotifier {
         .findAll();
     debugPrint(assignedOrders.toString());
     return assignedOrders;
-  }
-
-  // delete the order
-  Future<void> deleteOrder(Order order) async {
-    await isar.writeTxn(() async {
-      await isar.assignedOrders
-          .deleteAll(order.assignedOrders.map((e) => e.id!).toList());
-      await isar.orders.delete(order.id!);
-    });
-
-    await fetchOrders();
   }
 }

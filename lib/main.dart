@@ -4,14 +4,9 @@ import 'package:missed_works_app/recipient.dart';
 import 'package:missed_works_app/register.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-
-// import 'details.dart';
 import 'details_page.dart';
 import 'prefs.dart';
 import 'recipient_details.dart';
-// import 'register.dart';
-
-import 'register_page.dart';
 import 'register_recipients.dart';
 import 'search_widget.dart';
 import 'package:page_transition/page_transition.dart';

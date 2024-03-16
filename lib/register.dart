@@ -231,10 +231,10 @@ class ThreeTextFields extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        update
-            ? Text(controller3.text)
-            : Expanded(
-                flex: 3,
+        update && controller3.text.isNotEmpty
+            ? SizedBox(width: 120, child: Text(controller3.text))
+            : SizedBox(
+                width: 120,
                 child: TextField(
                   decoration: const InputDecoration(
                       hintText: "العمل", border: OutlineInputBorder()),
@@ -245,6 +245,7 @@ class ThreeTextFields extends StatelessWidget {
         Expanded(
           flex: 2,
           child: TextField(
+            textAlign: TextAlign.center,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(

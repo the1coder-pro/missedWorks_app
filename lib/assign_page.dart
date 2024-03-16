@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:missed_works_app/prefs.dart';
 import 'package:provider/provider.dart';
 import 'assigned_order.dart';
@@ -89,6 +90,7 @@ class _AssignPageState extends State<AssignPage> {
     if (recipients.isNotEmpty) {
       _recipient = recipients.first.value;
     }
+    addItem();
     super.initState();
   }
 
@@ -122,12 +124,16 @@ class _AssignPageState extends State<AssignPage> {
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Center(
                 child: DataTable(
-                    border:
-                        TableBorder.all(borderRadius: BorderRadius.circular(5)),
+                    headingRowHeight: 40,
+                    headingRowColor: MaterialStatePropertyAll<Color>(
+                        Theme.of(context).colorScheme.primaryContainer),
+                    border: TableBorder.all(
+                        color: Theme.of(context).colorScheme.onBackground,
+                        borderRadius: BorderRadius.circular(5)),
                     columns: ['العمل', 'الكمية', 'السعر']
                         .map((title) => DataColumn(
                             label: Center(
@@ -145,9 +151,11 @@ class _AssignPageState extends State<AssignPage> {
                             ]))
                         .toList()),
               ),
+              const SizedBox(height: 20),
               ExpansionTile(
                 title: const Text("إضافة مستلم"),
                 children: [
+                  const SizedBox(height: 5),
                   TextField(
                       controller: nameController,
                       decoration: const InputDecoration(
@@ -166,54 +174,67 @@ class _AssignPageState extends State<AssignPage> {
                       decoration: const InputDecoration(
                           hintText: "رقم الهاتف",
                           border: OutlineInputBorder())),
+                  const SizedBox(height: 20)
                 ],
               ),
               const SizedBox(height: 10),
               if (recipients.isNotEmpty)
-                DropdownButtonFormField<Recipient>(
-                  decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5))),
-                  alignment: Alignment.center,
-                  style: TextStyle(
-                      fontFamily: "Rubik",
-                      fontSize: 15,
-                      color: Theme.of(context).colorScheme.onBackground),
-                  hint: const Text('اختر المستلم'),
-                  items: recipients,
-                  value: _recipient,
-                  onChanged: (value) {
-                    debugPrint(value!.name);
+                Center(
+                  child: DropdownButtonFormField<Recipient>(
+                    decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(5))),
+                    alignment: Alignment.center,
+                    style: TextStyle(
+                        fontFamily: "Rubik",
+                        fontSize: 15,
+                        color: Theme.of(context).colorScheme.onBackground),
+                    hint: const Text('اختر المستلم'),
+                    items: recipients,
+                    value: _recipient,
+                    onChanged: (value) {
+                      debugPrint(value!.name);
+                      setState(() {
+                        _recipient = value;
+                      });
+                    },
+                  ),
+                ),
+              const SizedBox(height: 10),
+              MyListTile(
+                  orderer: db.currentOrderer!,
+                  item: _items[0],
+                  onChanged: (value, text1, text2) {
                     setState(() {
-                      _recipient = value;
+                      _items[0] =
+                          Item(value: value, text1: text1, text2: text2);
                     });
-                  },
-                ),
-              ListTile(
-                title: const Text("الأعمال"),
-                trailing: IconButton(
-                  onPressed: addItem,
-                  icon: const Icon(Icons.add),
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _items.length,
-                  itemBuilder: (context, index) {
-                    return MyListTile(
-                      delete: () => deleteItem(index),
-                      orderer: db.currentOrderer!,
-                      item: _items[index],
-                      onChanged: (value, text1, text2) {
-                        setState(() {
-                          _items[index] =
-                              Item(value: value, text1: text1, text2: text2);
-                        });
-                      },
-                    );
-                  },
-                ),
-              )
+                  }),
+              // ListTile(
+              //   title: const Text("الأعمال"),
+              //   trailing: IconButton(
+              //     onPressed: addItem,
+              //     icon: const Icon(Icons.add),
+              //   ),
+              // ),
+              // Expanded(
+              //   child: ListView.builder(
+              //     itemCount: _items.length,
+              //     itemBuilder: (context, index) {
+              //       return MyListTile(
+              //         delete: () => deleteItem(index),
+              //         orderer: db.currentOrderer!,
+              //         item: _items[index],
+              //         onChanged: (value, text1, text2) {
+              //           setState(() {
+              //             _items[index] =
+              //                 Item(value: value, text1: text1, text2: text2);
+              //           });
+              //         },
+              //       );
+              //     },
+              //   ),
+              // )
             ],
           ),
         ),
@@ -233,14 +254,12 @@ class Item {
 class MyListTile extends StatefulWidget {
   final Item item;
   final Orderer orderer;
-  final void Function() delete;
   final Function(Order?, String, String) onChanged;
 
   const MyListTile(
       {super.key,
       required this.orderer,
       required this.item,
-      required this.delete,
       required this.onChanged});
 
   @override
@@ -263,64 +282,68 @@ class _MyListTileState extends State<MyListTile> {
   @override
   Widget build(BuildContext context) {
     final db = context.read<MainDatabase>();
-    return ListTile(
-      trailing: IconButton(
-        onPressed: widget.delete,
-        icon: const Icon(Icons.delete),
-      ),
-      title: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Row(
-          children: [
-            DropdownButton<Order>(
-              value: _selectedValue,
-              alignment: Alignment.center,
-              style: const TextStyle(fontFamily: "Rubik", fontSize: 15),
-              hint: const Text('اختر العمل'),
-              items: db.currentOrdererUnasssignedOrders.map((Order value) {
-                return DropdownMenuItem<Order>(
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(
+            children: [
+              LimitedBox(
+                maxWidth: 250,
+                child: DropdownButtonFormField<Order>(
+                  decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5))),
+                  value: _selectedValue,
                   alignment: Alignment.center,
-                  value: value,
-                  child: Center(
-                      child: Text(
-                    value.title,
-                    style: TextStyle(
-                        color: Theme.of(context).colorScheme.onBackground),
-                  )),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedValue = value;
-                });
-                widget.onChanged(
-                    value, _text1Controller.text, _text2Controller.text);
-              },
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                keyboardType: TextInputType.number,
-                controller: _text1Controller,
-                decoration: const InputDecoration(
-                    hintText: 'الكمية', border: OutlineInputBorder()),
-                onChanged: (text) => widget.onChanged(
-                    _selectedValue, text, _text2Controller.text),
+                  style: const TextStyle(fontFamily: "Rubik", fontSize: 15),
+                  hint: const Text('اختر العمل'),
+                  items: db.currentOrdererUnasssignedOrders.map((Order value) {
+                    return DropdownMenuItem<Order>(
+                      alignment: Alignment.center,
+                      value: value,
+                      child: Center(
+                          child: Text(
+                        value.title,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onBackground),
+                      )),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedValue = value;
+                    });
+                    widget.onChanged(
+                        value, _text1Controller.text, _text2Controller.text);
+                  },
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  keyboardType: TextInputType.number,
+                  controller: _text1Controller,
+                  decoration: const InputDecoration(
+                      hintText: 'الكمية', border: OutlineInputBorder()),
+                  onChanged: (text) => widget.onChanged(
+                      _selectedValue, text, _text2Controller.text),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      subtitle: TextField(
-        controller: _text2Controller,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: const InputDecoration(
-            hintText: 'السعر', border: OutlineInputBorder()),
-        onChanged: (text) =>
-            widget.onChanged(_selectedValue, _text1Controller.text, text),
-      ),
+        TextField(
+          controller: _text2Controller,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: const InputDecoration(
+              hintText: 'السعر', border: OutlineInputBorder()),
+          onChanged: (text) =>
+              widget.onChanged(_selectedValue, _text1Controller.text, text),
+        )
+      ],
     );
   }
 }

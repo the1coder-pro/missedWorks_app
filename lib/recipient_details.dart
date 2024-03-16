@@ -74,7 +74,9 @@ class _RecipientDetailsPageState extends State<RecipientDetailsPage> {
                     DataColumn(label: Text("#")),
                     DataColumn(label: Text("العمل")),
                     DataColumn(label: Text("المستفيد")),
-                    DataColumn(label: Text("التاريخ")),
+                    DataColumn(
+                        label: Text("تاريخ الإستلام",
+                            style: TextStyle(letterSpacing: 0))),
                     DataColumn(label: Text("الكمية")),
                     DataColumn(label: Text("السعر")),
                   ], rows: [
