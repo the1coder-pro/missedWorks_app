@@ -1,4 +1,4 @@
-package com.example.missed_works_app
+package com.orange.missed_works_app
 
 import io.flutter.embedding.android.FlutterActivity
 
