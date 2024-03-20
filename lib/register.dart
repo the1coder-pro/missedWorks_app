@@ -54,6 +54,9 @@ class _RegisterPageState extends State<RegisterPage> {
     super.initState();
   }
 
+  // tobe removed from the list of maps of orders
+  List<Map> toBeRemoved = [];
+
   @override
   Widget build(BuildContext context) {
     final mainDatabase = context.read<MainDatabase>();
@@ -102,8 +105,13 @@ class _RegisterPageState extends State<RegisterPage> {
                       }
                     }
 
+                    debugPrint('mapsOfOrders: $mapsOfOrders');
+
+                    debugPrint('removed: $toBeRemoved');
+
                     mainDatabase.addOrderer(newOrderer, orders,
-                        changedOrders: mapsOfOrders);
+                        changedOrders: mapsOfOrders,
+                        removedOrders: toBeRemoved);
 
                     debugPrint('updated');
                     if (context.mounted) {
@@ -177,8 +185,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   itemCount: _listTileData.length,
                   itemBuilder: (context, index) {
                     final controllers = _listTileData[index];
-                    return ListTile(
-                      title: ThreeTextFields(
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 5, left: 2, right: 2),
+                      child: ThreeTextFields(
                           update: widget.orderer != null,
                           controller1: controllers[0],
                           controller2: controllers[1],
@@ -208,6 +217,15 @@ class _RegisterPageState extends State<RegisterPage> {
   void _deleteListTile(int index) {
     setState(() {
       _listTileData.removeAt(index);
+      // get the map of the order to be removed
+      if (widget.orderer != null) {
+        // check if mapsOfOrders has the index
+        if (mapsOfOrders.length - 1 >= index) {
+          if (mapsOfOrders[index]['id'] != null) {
+            toBeRemoved.add(mapsOfOrders[index]);
+          }
+        }
+      }
     });
   }
 }
@@ -232,9 +250,15 @@ class ThreeTextFields extends StatelessWidget {
     return Row(
       children: [
         update && controller3.text.isNotEmpty
-            ? SizedBox(width: 120, child: Text(controller3.text))
+            ? SizedBox(
+                width: 100,
+                child: Text(
+                  controller3.text,
+                  softWrap: true,
+                  overflow: TextOverflow.fade,
+                ))
             : SizedBox(
-                width: 120,
+                width: 100,
                 child: TextField(
                   decoration: const InputDecoration(
                       hintText: "العمل", border: OutlineInputBorder()),
@@ -242,8 +266,8 @@ class ThreeTextFields extends StatelessWidget {
                 ),
               ),
         const SizedBox(width: 5.0),
-        Expanded(
-          flex: 2,
+        SizedBox(
+          width: 80,
           child: TextField(
             textAlign: TextAlign.center,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],

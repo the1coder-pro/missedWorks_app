@@ -93,7 +93,7 @@ class MainDatabase extends ChangeNotifier {
 
   // add orderer
   Future<void> addOrderer(Orderer orderer, List<Order> orders,
-      {List<Map>? changedOrders}) async {
+      {List<Map>? changedOrders, List<Map>? removedOrders}) async {
     await isar.writeTxn(() async {
       // check if orderer is there
       if (orderer.id == null) {
@@ -124,6 +124,18 @@ class MainDatabase extends ChangeNotifier {
 
             await newOrder.assignedOrders.save();
             await newOrder.author.save();
+          }
+
+          for (var map in removedOrders!) {
+            await isar.orders.delete(map['id']);
+            await isar.assignedOrders
+                .filter()
+                .order((q) => q.idEqualTo(map['id']))
+                .deleteAll();
+            await isar.recipients
+                .filter()
+                .assignedOrders((q) => q.order((q) => q.idEqualTo(map['id'])))
+                .deleteAll();
           }
         }
       }
@@ -157,6 +169,11 @@ class MainDatabase extends ChangeNotifier {
             .order((q) => q.idEqualTo(order.id))
             .deleteAll();
       }
+      await isar.recipients
+          .filter()
+          .assignedOrders(
+              (q) => q.order((q) => q.author((q) => q.idEqualTo(orderer.id))))
+          .deleteAll();
       await isar.orders
           .filter()
           .author((q) => q.idEqualTo(orderer.id))
@@ -225,7 +242,26 @@ class MainDatabase extends ChangeNotifier {
   // delete the recipient
   Future<void> deleteRecipient(Recipient recipient) async {
     await isar.writeTxn(() async {
+      await isar.assignedOrders
+          .filter()
+          .recipient((q) => q.idEqualTo(recipient.id))
+          .deleteAll();
+      await isar.orders
+          .filter()
+          .assignedOrders((q) => q.recipient((q) => q.idEqualTo(recipient.id)))
+          .deleteAll();
+      await isar.recipients
+          .filter()
+          .assignedOrders((q) => q.recipient((q) => q.idEqualTo(recipient.id)))
+          .deleteAll();
+
       await isar.recipients.delete(recipient.id!);
+
+      // remove assigned orders that are not assigned to any recipient
+      await isar.assignedOrders
+          .filter()
+          .recipient((q) => q.idEqualTo(null))
+          .deleteAll();
     });
 
     await fetchRecipients();

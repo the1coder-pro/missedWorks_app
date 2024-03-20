@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
+import 'package:missed_works_app/details_page.dart';
 import 'package:missed_works_app/prefs.dart';
 import 'package:provider/provider.dart';
 import 'assigned_order.dart';
@@ -112,7 +112,50 @@ class _AssignPageState extends State<AssignPage> {
             IconButton(
               icon: const Icon(Icons.check),
               onPressed: () async {
-                saveData();
+                if (nameController.text.isEmpty && _recipient == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("يجب إضافة مستلم أولاً")));
+                  return;
+                } else {
+                  // check the items if amounts or costs are higher than the original
+                  for (var item in _items) {
+                    if (item.text2.isNotEmpty && item.text1.isNotEmpty) {
+                      if (item.value!.amount! < int.parse(item.text1)) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            backgroundColor:
+                                Theme.of(context).colorScheme.error,
+                            content: Text(
+                              "الكمية المدخلة أكبر من الكمية المتبقية",
+                              style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onError),
+                            )));
+                        return;
+                      }
+
+                      if (item.value!.cost! < double.parse(item.text2)) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            backgroundColor:
+                                Theme.of(context).colorScheme.error,
+                            content: Text(
+                              "السعر المدخل أكبر من السعر المتبقي",
+                              style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onError),
+                            )));
+                        return;
+                      }
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          backgroundColor: Theme.of(context).colorScheme.error,
+                          content: Text(
+                            "يجب ملئ الكمية والسعر",
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onError),
+                          )));
+                      return;
+                    }
+                  }
+                  saveData();
+                }
 
                 if (context.mounted) {
                   Navigator.pop(context);
@@ -126,30 +169,82 @@ class _AssignPageState extends State<AssignPage> {
           child: Column(
             // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Center(
-                child: DataTable(
-                    headingRowHeight: 40,
-                    headingRowColor: MaterialStatePropertyAll<Color>(
-                        Theme.of(context).colorScheme.primaryContainer),
+              SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: Table(
                     border: TableBorder.all(
                         color: Theme.of(context).colorScheme.onBackground,
                         borderRadius: BorderRadius.circular(5)),
-                    columns: ['العمل', 'الكمية', 'السعر']
-                        .map((title) => DataColumn(
-                            label: Center(
-                                child: Text(title,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold)))))
-                        .toList(),
-                    rows: db.currentOrdererUnasssignedOrders
-                        .map((order) => DataRow(cells: [
-                              DataCell(Center(child: Text(order.title))),
-                              DataCell(
-                                  Center(child: Text(order.amount.toString()))),
-                              DataCell(
-                                  Center(child: Text(order.cost.toString()))),
-                            ]))
-                        .toList()),
+                    columnWidths: const {
+                      0: FlexColumnWidth(0.5),
+                      1: FlexColumnWidth(2),
+                      2: FlexColumnWidth(1),
+                      3: FlexColumnWidth(2),
+                    },
+                    children: [
+                      TableRow(
+                          decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer),
+                          children: const [
+                            TableCell(
+                                child: Center(
+                                    child: Padding(
+                              padding: EdgeInsets.only(top: 5, bottom: 5),
+                              child: Text("#"),
+                            ))),
+                            TableCell(
+                                verticalAlignment:
+                                    TableCellVerticalAlignment.middle,
+                                child: Center(child: Text('العمل'))),
+                            TableCell(
+                                verticalAlignment:
+                                    TableCellVerticalAlignment.middle,
+                                child: Center(child: Text('الكمية'))),
+                            TableCell(
+                                verticalAlignment:
+                                    TableCellVerticalAlignment.middle,
+                                child: Center(child: Text('السعر'))),
+                          ]),
+                      ...db.currentOrdererUnasssignedOrders.indexed
+                          .map((order) => TableRow(children: [
+                                TableCell(
+                                    child: Center(
+                                        child: Padding(
+                                  padding:
+                                      const EdgeInsets.only(top: 5, bottom: 5),
+                                  child: Text((order.$1 + 1).toString()),
+                                ))),
+                                TableCell(
+                                    verticalAlignment:
+                                        TableCellVerticalAlignment.middle,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                          right: 5, left: 5),
+                                      child: Align(
+                                          alignment: Alignment.centerRight,
+                                          child: Text(order.$2.title)),
+                                    )),
+                                TableCell(
+                                    verticalAlignment:
+                                        TableCellVerticalAlignment.middle,
+                                    child: Center(
+                                        child:
+                                            Text(order.$2.amount.toString()))),
+                                TableCell(
+                                    verticalAlignment:
+                                        TableCellVerticalAlignment.middle,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                          right: 5, left: 5),
+                                      child: Align(
+                                          alignment: Alignment.centerRight,
+                                          child: Text(
+                                              "${order.$2.cost!.removeTrailingZero()} ريال")),
+                                    )),
+                              ]))
+                    ]),
               ),
               const SizedBox(height: 20),
               ExpansionTile(
@@ -210,31 +305,6 @@ class _AssignPageState extends State<AssignPage> {
                           Item(value: value, text1: text1, text2: text2);
                     });
                   }),
-              // ListTile(
-              //   title: const Text("الأعمال"),
-              //   trailing: IconButton(
-              //     onPressed: addItem,
-              //     icon: const Icon(Icons.add),
-              //   ),
-              // ),
-              // Expanded(
-              //   child: ListView.builder(
-              //     itemCount: _items.length,
-              //     itemBuilder: (context, index) {
-              //       return MyListTile(
-              //         delete: () => deleteItem(index),
-              //         orderer: db.currentOrderer!,
-              //         item: _items[index],
-              //         onChanged: (value, text1, text2) {
-              //           setState(() {
-              //             _items[index] =
-              //                 Item(value: value, text1: text1, text2: text2);
-              //           });
-              //         },
-              //       );
-              //     },
-              //   ),
-              // )
             ],
           ),
         ),
@@ -295,19 +365,17 @@ class _MyListTileState extends State<MyListTile> {
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(5))),
                   value: _selectedValue,
-                  alignment: Alignment.center,
                   style: const TextStyle(fontFamily: "Rubik", fontSize: 15),
                   hint: const Text('اختر العمل'),
                   items: db.currentOrdererUnasssignedOrders.map((Order value) {
                     return DropdownMenuItem<Order>(
                       alignment: Alignment.center,
                       value: value,
-                      child: Center(
-                          child: Text(
+                      child: Text(
                         value.title,
                         style: TextStyle(
                             color: Theme.of(context).colorScheme.onBackground),
-                      )),
+                      ),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -321,10 +389,11 @@ class _MyListTileState extends State<MyListTile> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: TextField(
+                child: TextFormField(
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   keyboardType: TextInputType.number,
                   controller: _text1Controller,
+                  textAlign: TextAlign.center,
                   decoration: const InputDecoration(
                       hintText: 'الكمية', border: OutlineInputBorder()),
                   onChanged: (text) => widget.onChanged(
@@ -334,7 +403,7 @@ class _MyListTileState extends State<MyListTile> {
             ],
           ),
         ),
-        TextField(
+        TextFormField(
           controller: _text2Controller,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
