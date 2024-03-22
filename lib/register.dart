@@ -16,11 +16,17 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _listTileData = <List<TextEditingController>>[];
+  final _focusNodes = <List<FocusNode>>[];
   TextEditingController nameController = TextEditingController();
   TextEditingController idNumberController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
 
   List<Map> mapsOfOrders = [];
+
+  // make focusNodes for every field
+  final FocusNode nameFocus = FocusNode();
+  final FocusNode idNumberFocus = FocusNode();
+  final FocusNode phoneFocus = FocusNode();
 
   // fill controllers with orderer's data if orderer is not null
   void fillControllers() {
@@ -44,6 +50,11 @@ class _RegisterPageState extends State<RegisterPage> {
           TextEditingController(text: map['amount'].toString()),
           TextEditingController(text: map['title']),
         ]);
+        _focusNodes.add([
+          FocusNode(),
+          FocusNode(),
+          FocusNode(),
+        ]);
       }
     }
   }
@@ -51,7 +62,24 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void initState() {
     fillControllers();
+
+    nameFocus.addListener(() {
+      if (!nameFocus.hasFocus) {
+        if (nameController.text.isNotEmpty) {
+          idNumberFocus.requestFocus();
+        }
+      }
+    });
+
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    nameFocus.dispose();
+    idNumberFocus.dispose();
+    phoneFocus.dispose();
+    super.dispose();
   }
 
   // tobe removed from the list of maps of orders
@@ -154,12 +182,23 @@ class _RegisterPageState extends State<RegisterPage> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               TextField(
+                  autofocus: true,
+                  focusNode: nameFocus,
+                  onSubmitted: (value) {
+                    nameFocus.unfocus();
+                    FocusScope.of(context).requestFocus(idNumberFocus);
+                  },
                   controller: nameController,
                   // fill in the name if orderer is not null
                   decoration: const InputDecoration(
                       hintText: "الإسم", border: OutlineInputBorder())),
               const SizedBox(height: 10),
               TextField(
+                  focusNode: idNumberFocus,
+                  onSubmitted: (value) {
+                    idNumberFocus.unfocus();
+                    FocusScope.of(context).requestFocus(phoneFocus);
+                  },
                   controller: idNumberController,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -167,6 +206,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       hintText: "رقم الهوية", border: OutlineInputBorder())),
               const SizedBox(height: 10),
               TextField(
+                  focusNode: phoneFocus,
+                  onSubmitted: (value) => phoneFocus.unfocus(),
                   controller: phoneController,
                   keyboardType: TextInputType.phone,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -188,6 +229,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     return Padding(
                       padding: const EdgeInsets.only(top: 5, left: 2, right: 2),
                       child: ThreeTextFields(
+                          focusNodes: _focusNodes,
+                          index: index,
                           update: widget.orderer != null,
                           controller1: controllers[0],
                           controller2: controllers[1],
@@ -211,12 +254,18 @@ class _RegisterPageState extends State<RegisterPage> {
         TextEditingController(),
         TextEditingController(),
       ]);
+      _focusNodes.add([
+        FocusNode(),
+        FocusNode(),
+        FocusNode(),
+      ]);
     });
   }
 
   void _deleteListTile(int index) {
     setState(() {
       _listTileData.removeAt(index);
+      _focusNodes.removeAt(index);
       // get the map of the order to be removed
       if (widget.orderer != null) {
         // check if mapsOfOrders has the index
@@ -236,9 +285,13 @@ class ThreeTextFields extends StatelessWidget {
   final TextEditingController controller3;
   final void Function()? delete;
   final bool update;
+  final List<List<FocusNode>> focusNodes;
+  final int index;
 
   const ThreeTextFields(
       {super.key,
+      required this.focusNodes,
+      required this.index,
       required this.update,
       required this.controller1,
       required this.controller2,
@@ -260,6 +313,11 @@ class ThreeTextFields extends StatelessWidget {
             : SizedBox(
                 width: 100,
                 child: TextField(
+                  focusNode: focusNodes[index][0],
+                  onSubmitted: (value) {
+                    focusNodes[index][0].unfocus();
+                    FocusScope.of(context).requestFocus(focusNodes[index][1]);
+                  },
                   decoration: const InputDecoration(
                       hintText: "العمل", border: OutlineInputBorder()),
                   controller: controller3,
@@ -269,6 +327,11 @@ class ThreeTextFields extends StatelessWidget {
         SizedBox(
           width: 80,
           child: TextField(
+            focusNode: focusNodes[index][1],
+            onSubmitted: (value) {
+              focusNodes[index][1].unfocus();
+              FocusScope.of(context).requestFocus(focusNodes[index][2]);
+            },
             textAlign: TextAlign.center,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             keyboardType: TextInputType.number,
@@ -281,6 +344,19 @@ class ThreeTextFields extends StatelessWidget {
         Expanded(
           flex: 2,
           child: TextField(
+            focusNode: focusNodes[index][2],
+            onSubmitted: (value) {
+              // check if their is a next field to focus on
+              debugPrint("${focusNodes.length - 1 > 2}");
+              if (focusNodes.length > index + 1) {
+                focusNodes[index][2].unfocus();
+                FocusScope.of(context).requestFocus(focusNodes[index + 1][1]);
+              } else {
+                // make a new listTile
+                focusNodes[index][2].unfocus();
+                FocusScope.of(context).requestFocus(focusNodes.first[1]);
+              }
+            },
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(

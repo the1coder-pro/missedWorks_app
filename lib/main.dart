@@ -5,6 +5,7 @@ import 'package:missed_works_app/recipient.dart';
 import 'package:missed_works_app/register.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'details_page.dart';
 import 'prefs.dart';
 import 'recipient_details.dart';
@@ -164,15 +165,29 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ],
             ),
-            leading: IconButton(
-                icon: const Icon(Icons.settings_outlined),
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      PageTransition(
-                          child: const SettingsSection(),
-                          type: PageTransitionType.rightToLeft));
-                }),
+            leading: PopupMenuButton(
+              icon: Icon(Icons.more_vert),
+              itemBuilder: (context) {
+                return [
+                  PopupMenuItem(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Icon(Icons.settings_outlined),
+                          Spacer(),
+                          Text('الإعدادات'),
+                        ],
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            PageTransition(
+                                child: const SettingsSection(),
+                                type: PageTransitionType.rightToLeft));
+                      }),
+                ];
+              },
+            ),
             centerTitle: true,
             backgroundColor: Theme.of(context).colorScheme.background,
             title: const Text(
@@ -214,6 +229,23 @@ class _MyHomePageState extends State<MyHomePage> {
                           motion: const ScrollMotion(),
                           children: [
                             SlidableAction(
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .tertiaryContainer,
+                                foregroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .onTertiaryContainer,
+                                icon: Icons.edit_outlined,
+                                label: 'تعديل',
+                                onPressed: (value) {
+                                  Navigator.push(
+                                      context,
+                                      PageTransition(
+                                          type: PageTransitionType.bottomToTop,
+                                          child:
+                                              RegisterPage(orderer: orderer)));
+                                }),
+                            SlidableAction(
                               onPressed: (context) {
                                 showDialog(
                                     context: context,
@@ -249,7 +281,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               foregroundColor: Theme.of(context)
                                   .colorScheme
                                   .onErrorContainer,
-                              icon: Icons.delete,
+                              icon: Icons.delete_outline,
                               label: 'حذف',
                             ),
                           ],
@@ -312,6 +344,23 @@ class _MyHomePageState extends State<MyHomePage> {
                         motion: const ScrollMotion(),
                         children: [
                           SlidableAction(
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .tertiaryContainer,
+                              foregroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .onTertiaryContainer,
+                              icon: Icons.edit_outlined,
+                              label: 'تعديل',
+                              onPressed: (value) {
+                                Navigator.push(
+                                    context,
+                                    PageTransition(
+                                        type: PageTransitionType.bottomToTop,
+                                        child: RegisterRecipients(
+                                            recipient: recipient)));
+                              }),
+                          SlidableAction(
                             onPressed: (context) {
                               showDialog(
                                   context: context,
@@ -345,7 +394,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 Theme.of(context).colorScheme.errorContainer,
                             foregroundColor:
                                 Theme.of(context).colorScheme.onErrorContainer,
-                            icon: Icons.delete,
+                            icon: Icons.delete_outline,
                             label: 'حذف',
                           ),
                         ],
@@ -393,7 +442,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         context,
                         PageTransition(
                             type: PageTransitionType.bottomToTop,
-                            child: const RegisterRecipients()));
+                            child: RegisterRecipients()));
                   },
                   child: const Icon(Icons.person_add_alt_1_outlined),
                 ),
@@ -426,6 +475,21 @@ class SettingsSection extends StatelessWidget {
               value: themeProvider.isDark,
               onChanged: (value) {
                 themeProvider.updateTheme(value);
+              },
+            ),
+            const SizedBox(height: 20),
+            // make a button to open play store to update the app
+            ListTile(
+              leading: const Icon(Icons.open_in_new),
+              title: const Text("الذهاب الى المتجر"),
+              onTap: () async {
+                // open play store
+                Uri url = Uri.parse(
+                    'https://play.google.com/store/apps/details?id=com.orange.missed_works_app');
+
+                if (!await launchUrl(url)) {
+                  throw Exception('Could not launch $url');
+                }
               },
             ),
           ],

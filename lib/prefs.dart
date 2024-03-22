@@ -230,15 +230,6 @@ class MainDatabase extends ChangeNotifier {
     await fetchRecipients();
   }
 
-  // update the recipient
-  Future<void> updateRecipient(Recipient recipient) async {
-    await isar.writeTxn(() async {
-      await isar.recipients.put(recipient);
-    });
-
-    await fetchRecipients();
-  }
-
   // delete the recipient
   Future<void> deleteRecipient(Recipient recipient) async {
     await isar.writeTxn(() async {

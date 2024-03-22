@@ -124,7 +124,7 @@ class _DetailsPageState extends State<DetailsPage> {
                       style: Theme.of(context)
                           .textTheme
                           .displayMedium!
-                          .copyWith(fontSize: 40)),
+                          .copyWith(fontSize: 30)),
                   const SizedBox(height: 10),
                   ListTile(
                     title: Text(db.currentOrderer!.idNumber.toString(),
@@ -399,17 +399,36 @@ class _DetailsPageState extends State<DetailsPage> {
                                                 DataCell(Text(order
                                                     .$2.order.value!.title)),
                                                 DataCell(
-                                                    Text(order.$2.recipient.value!.name,
-                                                        style: TextStyle(
-                                                            decoration:
-                                                                TextDecoration
-                                                                    .underline,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color:
-                                                                Theme.of(context)
-                                                                    .colorScheme
-                                                                    .primary)),
+                                                    Row(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        SizedBox(
+                                                          width: 200,
+                                                          child: Text(
+                                                              order.$2.recipient
+                                                                  .value!.name,
+                                                              style: TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  color: Theme.of(
+                                                                          context)
+                                                                      .colorScheme
+                                                                      .primary)),
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 10),
+                                                        Icon(
+                                                            Icons
+                                                                .badge_outlined,
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .colorScheme
+                                                                .primary),
+                                                      ],
+                                                    ),
                                                     onTap: () => Navigator.push(
                                                         context,
                                                         PageTransition(

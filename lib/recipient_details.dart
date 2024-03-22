@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:missed_works_app/register_recipients.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -44,7 +45,6 @@ class _RecipientDetailsPageState extends State<RecipientDetailsPage> {
       child: Scaffold(
         appBar: AppBar(
           actions: [
-            // delete icon button
             IconButton(
                 icon: const Icon(Icons.delete_outline),
                 onPressed: () {
@@ -74,6 +74,15 @@ class _RecipientDetailsPageState extends State<RecipientDetailsPage> {
                             ),
                           ));
                 }),
+            IconButton(
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              RegisterRecipients(recipient: widget.recipient)));
+                },
+                icon: const Icon(Icons.edit_outlined))
           ],
         ),
         body: Padding(
@@ -84,7 +93,7 @@ class _RecipientDetailsPageState extends State<RecipientDetailsPage> {
                   style: Theme.of(context)
                       .textTheme
                       .displayMedium!
-                      .copyWith(fontSize: 45)),
+                      .copyWith(fontSize: 30)),
               const SizedBox(height: 10),
               ListTile(
                 title: Text(widget.recipient.idNumber.toString(),
@@ -114,7 +123,7 @@ class _RecipientDetailsPageState extends State<RecipientDetailsPage> {
                   if (assignedOrders[i].order.value != null)
                     ExpansionTile(
                         title: Text(
-                            "${assignedOrders[i].order.value!.author.value!.name} - ${assignedOrders[i].order.value!.title}"),
+                            "${assignedOrders[i].order.value!.author.value!.name} (${assignedOrders[i].order.value!.title})"),
                         subtitle: Text(intl.DateFormat('dd/MM/yyyy')
                             .format(assignedOrders[i].date!)),
                         children: [
@@ -139,27 +148,49 @@ class _RecipientDetailsPageState extends State<RecipientDetailsPage> {
                                 .value!
                                 .name),
                           ),
-                          // العمل
-                          ListTile(
-                            title: const Text("العمل"),
-                            subtitle:
-                                Text(assignedOrders[i].order.value!.title),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SizedBox(
+                                width: 150,
+                                child: ListTile(
+                                  title: const Text("تاريخ الإستلام"),
+                                  subtitle: Text(intl.DateFormat('dd/MM/yyyy')
+                                      .format(assignedOrders[i].date!)),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 150,
+                                child: ListTile(
+                                  title: const Text("العمل"),
+                                  subtitle: Text(
+                                      assignedOrders[i].order.value!.title),
+                                ),
+                              ),
+                            ],
                           ),
-                          ListTile(
-                            title: const Text("تاريخ الإستلام"),
-                            subtitle: Text(intl.DateFormat('dd/MM/yyyy')
-                                .format(assignedOrders[i].date!)),
-                          ),
-                          ListTile(
-                            title: const Text("الكمية"),
-                            subtitle: Text(assignedOrders[i].amount.toString()),
-                          ),
-                          ListTile(
-                            title: const Text("السعر"),
-                            subtitle: Text(assignedOrders[i]
-                                .cost
-                                .removeTrailingZero()
-                                .toString()),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SizedBox(
+                                width: 150,
+                                child: ListTile(
+                                  title: const Text("الكمية"),
+                                  subtitle:
+                                      Text(assignedOrders[i].amount.toString()),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 150,
+                                child: ListTile(
+                                  title: const Text("السعر"),
+                                  subtitle: Text(assignedOrders[i]
+                                      .cost
+                                      .removeTrailingZero()
+                                      .toString()),
+                                ),
+                              ),
+                            ],
                           ),
                         ])
                   else

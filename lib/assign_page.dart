@@ -84,12 +84,31 @@ class _AssignPageState extends State<AssignPage> {
     return items;
   }
 
+  // make a focusNode for every text field
+  FocusNode nameFocusNode = FocusNode();
+  FocusNode idNumberFocusNode = FocusNode();
+  FocusNode phoneFocusNode = FocusNode();
+  // FocusNode recipientFocusNode = FocusNode();
+
+  List<FocusNode> focusNodes = [
+    FocusNode(),
+    FocusNode(),
+    FocusNode(),
+  ];
+
   @override
   void initState() {
     recipients = getRecipients();
     if (recipients.isNotEmpty) {
       _recipient = recipients.first.value;
     }
+    nameFocusNode.addListener(() {
+      if (!nameFocusNode.hasFocus) {
+        if (nameController.text.isNotEmpty) {
+          idNumberFocusNode.requestFocus();
+        }
+      }
+    });
     addItem();
     super.initState();
   }
@@ -98,6 +117,14 @@ class _AssignPageState extends State<AssignPage> {
     setState(() {
       _items.removeAt(index);
     });
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    idNumberController.dispose();
+    phoneController.dispose();
+    super.dispose();
   }
 
   @override
@@ -252,18 +279,38 @@ class _AssignPageState extends State<AssignPage> {
                 children: [
                   const SizedBox(height: 5),
                   TextField(
+                      autofocus: true,
+                      focusNode: nameFocusNode,
+                      onSubmitted: (value) {
+                        nameFocusNode.unfocus();
+                        idNumberFocusNode.requestFocus();
+                      },
                       controller: nameController,
+                      keyboardType: TextInputType.name,
                       decoration: const InputDecoration(
                           hintText: "الإسم", border: OutlineInputBorder())),
                   const SizedBox(height: 10),
                   TextField(
+                      focusNode: idNumberFocusNode,
+                      onSubmitted: (value) {
+                        idNumberFocusNode.unfocus();
+                        phoneFocusNode.requestFocus();
+                      },
                       controller: idNumberController,
+                      keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: const InputDecoration(
                           hintText: "رقم الهوية",
                           border: OutlineInputBorder())),
                   const SizedBox(height: 10),
                   TextField(
+                      focusNode: phoneFocusNode,
+                      onSubmitted: (value) {
+                        phoneFocusNode.unfocus();
+
+                        FocusScope.of(context).requestFocus(focusNodes[0]);
+                      },
+                      keyboardType: TextInputType.phone,
                       controller: phoneController,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: const InputDecoration(
@@ -297,6 +344,7 @@ class _AssignPageState extends State<AssignPage> {
                 ),
               const SizedBox(height: 10),
               MyListTile(
+                  focusNodes: focusNodes,
                   orderer: db.currentOrderer!,
                   item: _items[0],
                   onChanged: (value, text1, text2) {
@@ -325,9 +373,11 @@ class MyListTile extends StatefulWidget {
   final Item item;
   final Orderer orderer;
   final Function(Order?, String, String) onChanged;
+  final List<FocusNode> focusNodes;
 
   const MyListTile(
       {super.key,
+      required this.focusNodes,
       required this.orderer,
       required this.item,
       required this.onChanged});
@@ -347,6 +397,21 @@ class _MyListTileState extends State<MyListTile> {
     _selectedValue = widget.item.value;
     _text1Controller.text = widget.item.text1;
     _text2Controller.text = widget.item.text2;
+
+    widget.focusNodes[0].addListener(() {
+      if (!widget.focusNodes[0].hasFocus) {
+        widget.onChanged(
+            _selectedValue, _text1Controller.text, _text2Controller.text);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.focusNodes[0].dispose();
+    widget.focusNodes[1].dispose();
+    widget.focusNodes[2].dispose();
+    super.dispose();
   }
 
   @override
@@ -361,6 +426,7 @@ class _MyListTileState extends State<MyListTile> {
               LimitedBox(
                 maxWidth: 250,
                 child: DropdownButtonFormField<Order>(
+                  focusNode: widget.focusNodes[0],
                   decoration: InputDecoration(
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(5))),
@@ -390,6 +456,11 @@ class _MyListTileState extends State<MyListTile> {
               const SizedBox(width: 10),
               Expanded(
                 child: TextFormField(
+                  onFieldSubmitted: (value) {
+                    widget.focusNodes[1].unfocus();
+                    FocusScope.of(context).requestFocus(widget.focusNodes[2]);
+                  },
+                  focusNode: widget.focusNodes[1],
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   keyboardType: TextInputType.number,
                   controller: _text1Controller,
@@ -404,7 +475,11 @@ class _MyListTileState extends State<MyListTile> {
           ),
         ),
         TextFormField(
+          focusNode: widget.focusNodes[2],
           controller: _text2Controller,
+          onFieldSubmitted: (value) {
+            widget.focusNodes[2].unfocus();
+          },
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: const InputDecoration(
