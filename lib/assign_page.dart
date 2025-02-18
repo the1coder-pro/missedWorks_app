@@ -200,7 +200,7 @@ class _AssignPageState extends State<AssignPage> {
                 scrollDirection: Axis.vertical,
                 child: Table(
                     border: TableBorder.all(
-                        color: Theme.of(context).colorScheme.onBackground,
+                        color: Theme.of(context).colorScheme.onSurface,
                         borderRadius: BorderRadius.circular(5)),
                     columnWidths: const {
                       0: FlexColumnWidth(0.5),
@@ -330,7 +330,7 @@ class _AssignPageState extends State<AssignPage> {
                     style: TextStyle(
                         fontFamily: "Rubik",
                         fontSize: 15,
-                        color: Theme.of(context).colorScheme.onBackground),
+                        color: Theme.of(context).colorScheme.onSurface),
                     hint: const Text('اختر المستلم'),
                     items: recipients,
                     value: _recipient,
@@ -440,7 +440,7 @@ class _MyListTileState extends State<MyListTile> {
                       child: Text(
                         value.title,
                         style: TextStyle(
-                            color: Theme.of(context).colorScheme.onBackground),
+                            color: Theme.of(context).colorScheme.onSurface),
                       ),
                     );
                   }).toList(),

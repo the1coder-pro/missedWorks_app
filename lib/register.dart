@@ -18,7 +18,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _listTileData = <List<TextEditingController>>[];
   final _focusNodes = <List<FocusNode>>[];
   TextEditingController nameController = TextEditingController();
-  TextEditingController idNumberController = TextEditingController();
+  // TextEditingController idNumberController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
 
   List<Map> mapsOfOrders = [];
@@ -32,7 +32,7 @@ class _RegisterPageState extends State<RegisterPage> {
   void fillControllers() {
     if (widget.orderer != null) {
       nameController.text = widget.orderer!.name;
-      idNumberController.text = widget.orderer!.idNumber!;
+      // idNumberController.text = widget.orderer!.idNumber!;
       phoneController.text = widget.orderer!.phoneNumber!;
 
       for (var order in widget.orderer!.orders) {
@@ -104,7 +104,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     final newOrderer = Orderer()
                       ..id = widget.orderer!.id
                       ..name = nameController.text
-                      ..idNumber = idNumberController.text
+                      // ..idNumber = idNumberController.text
                       ..phoneNumber = phoneController.text;
 
                     List<Order> orders = [];
@@ -149,7 +149,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   } else {
                     final newOrderer = Orderer()
                       ..name = nameController.text
-                      ..idNumber = idNumberController.text
+                      // ..idNumber = idNumberController.text
                       ..phoneNumber = phoneController.text;
 
                     List<Order> orders = [];
@@ -186,25 +186,25 @@ class _RegisterPageState extends State<RegisterPage> {
                   focusNode: nameFocus,
                   onSubmitted: (value) {
                     nameFocus.unfocus();
-                    FocusScope.of(context).requestFocus(idNumberFocus);
+                    FocusScope.of(context).requestFocus(phoneFocus);
                   },
                   controller: nameController,
                   // fill in the name if orderer is not null
                   decoration: const InputDecoration(
                       hintText: "الإسم", border: OutlineInputBorder())),
               const SizedBox(height: 10),
-              TextField(
-                  focusNode: idNumberFocus,
-                  onSubmitted: (value) {
-                    idNumberFocus.unfocus();
-                    FocusScope.of(context).requestFocus(phoneFocus);
-                  },
-                  controller: idNumberController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(
-                      hintText: "رقم الهوية", border: OutlineInputBorder())),
-              const SizedBox(height: 10),
+              // TextField(
+              //     focusNode: idNumberFocus,
+              //     onSubmitted: (value) {
+              //       idNumberFocus.unfocus();
+              //       FocusScope.of(context).requestFocus(phoneFocus);
+              //     },
+              //     controller: idNumberController,
+              //     keyboardType: TextInputType.number,
+              //     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              //     decoration: const InputDecoration(
+              //         hintText: "رقم الهوية", border: OutlineInputBorder())),
+              // const SizedBox(height: 10),
               TextField(
                   focusNode: phoneFocus,
                   onSubmitted: (value) => phoneFocus.unfocus(),

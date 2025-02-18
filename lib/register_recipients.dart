@@ -16,21 +16,21 @@ class RegisterRecipients extends StatefulWidget {
 
 class _RegisterRecipientsState extends State<RegisterRecipients> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _idNumberController = TextEditingController();
+  // final TextEditingController _idNumberController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
   // fill data if editing
   void getData() {
     if (widget.recipient != null) {
       _nameController.text = widget.recipient!.name;
-      _idNumberController.text = "${widget.recipient!.idNumber}";
+      // _idNumberController.text = "${widget.recipient!.idNumber}";
       _phoneController.text = "${widget.recipient!.phoneNumber}";
     }
   }
 
   // make focusNodes for every field
   final FocusNode _nameFocus = FocusNode();
-  final FocusNode _idNumberFocus = FocusNode();
+  // final FocusNode _idNumberFocus = FocusNode();
   final FocusNode _phoneFocus = FocusNode();
 
   initState() {
@@ -41,7 +41,7 @@ class _RegisterRecipientsState extends State<RegisterRecipients> {
     _nameFocus.addListener(() {
       if (!_nameFocus.hasFocus) {
         if (_nameController.text.isNotEmpty) {
-          _idNumberFocus.requestFocus();
+          // _idNumberFocus.requestFocus();
         }
       }
     });
@@ -68,14 +68,13 @@ class _RegisterRecipientsState extends State<RegisterRecipients> {
                   final recipient = Recipient()
                     ..id = widget.recipient!.id
                     ..name = _nameController.text
-                    ..idNumber = _idNumberController.text
+                    // ..idNumber = _idNumberController.text
                     ..phoneNumber = _phoneController.text;
 
                   context.read<MainDatabase>().addRecipientOrUpdate(recipient);
                 } else {
                   final newRecipient = Recipient()
                     ..name = _nameController.text
-                    ..idNumber = _idNumberController.text
                     ..phoneNumber = _phoneController.text;
                   context
                       .read<MainDatabase>()
@@ -96,7 +95,7 @@ class _RegisterRecipientsState extends State<RegisterRecipients> {
                 focusNode: _nameFocus,
                 onFieldSubmitted: (value) {
                   _nameFocus.unfocus();
-                  FocusScope.of(context).requestFocus(_idNumberFocus);
+                  FocusScope.of(context).requestFocus(_phoneFocus);
                 },
                 controller: _nameController,
                 keyboardType: TextInputType.name,
@@ -104,20 +103,7 @@ class _RegisterRecipientsState extends State<RegisterRecipients> {
                     border: OutlineInputBorder(), labelText: 'الاسم'),
               ),
               const SizedBox(height: 10),
-              TextFormField(
-                focusNode: _idNumberFocus,
-                onFieldSubmitted: (value) {
-                  _idNumberFocus.unfocus();
-                  FocusScope.of(context).requestFocus(_phoneFocus);
-                },
-                controller: _idNumberController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
-                decoration: const InputDecoration(
-                    border: OutlineInputBorder(), labelText: 'رقم الهوية'),
-              ),
+           
               const SizedBox(height: 10),
               TextFormField(
                 focusNode: _phoneFocus,

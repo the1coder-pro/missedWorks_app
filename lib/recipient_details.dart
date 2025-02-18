@@ -96,16 +96,15 @@ class _RecipientDetailsPageState extends State<RecipientDetailsPage> {
                       .copyWith(fontSize: 30)),
               const SizedBox(height: 10),
               ListTile(
-                title: Text(widget.recipient.idNumber.toString(),
+                title: Text(widget.recipient.phoneNumber.toString(),
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 20)),
-                subtitle: Text(widget.recipient.phoneNumber.toString()),
                 trailing: IconButton(
                     style: ButtonStyle(
-                        elevation: const MaterialStatePropertyAll(10),
-                        backgroundColor: MaterialStatePropertyAll(
+                        elevation: const WidgetStatePropertyAll(10),
+                        backgroundColor: WidgetStatePropertyAll(
                             Theme.of(context).colorScheme.primaryContainer),
-                        iconColor: MaterialStatePropertyAll(
+                        iconColor: WidgetStatePropertyAll(
                             Theme.of(context).colorScheme.onPrimaryContainer)),
                     icon: const Icon(Icons.phone_outlined),
                     onPressed: () async {

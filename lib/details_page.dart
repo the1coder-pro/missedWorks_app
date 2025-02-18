@@ -127,19 +127,17 @@ class _DetailsPageState extends State<DetailsPage> {
                           .copyWith(fontSize: 30)),
                   const SizedBox(height: 10),
                   ListTile(
-                    title: Text(db.currentOrderer!.idNumber.toString(),
+                    title: Text(db.currentOrderer!.phoneNumber.toString(),
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 20)),
-                    subtitle: Text(db.currentOrderer!.phoneNumber.toString()),
                     trailing: IconButton(
                         style: ButtonStyle(
-                            elevation: const MaterialStatePropertyAll(10),
-                            backgroundColor: MaterialStatePropertyAll(
+                            elevation: const WidgetStatePropertyAll(10),
+                            backgroundColor: WidgetStatePropertyAll(
                                 Theme.of(context).colorScheme.primaryContainer),
-                            iconColor: MaterialStatePropertyAll(
-                                Theme.of(context)
-                                    .colorScheme
-                                    .onPrimaryContainer)),
+                            iconColor: WidgetStatePropertyAll(Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer)),
                         icon: const Icon(Icons.phone_outlined),
                         onPressed: () async {
                           // phone button
@@ -169,7 +167,7 @@ class _DetailsPageState extends State<DetailsPage> {
                       const SizedBox(height: 10),
                       Table(
                           border: TableBorder.all(
-                              color: Theme.of(context).colorScheme.onBackground,
+                              color: Theme.of(context).colorScheme.onSurface,
                               borderRadius: BorderRadius.circular(5)),
                           columnWidths: const {
                             0: FlexColumnWidth(0.5),
@@ -239,7 +237,36 @@ class _DetailsPageState extends State<DetailsPage> {
                                             child: Text(
                                                 "${order.$2.cost!.removeTrailingZero()} ريال")),
                                       )),
-                                ]))
+                                ])),
+                            // add a row for the total cost (there is no total cost or total amount variable, so make the calculating) with a merged cells for text "المجموع"
+                            TableRow(children: [
+                              Container(),
+                              Container(),
+                              TableCell(
+                                  child: Container(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer,
+                                child: Center(
+                                    child: Padding(
+                                        padding: const EdgeInsets.only(
+                                            top: 5, bottom: 5),
+                                        child: Text("المجموع"))),
+                              )),
+                              TableCell(
+                                  verticalAlignment:
+                                      TableCellVerticalAlignment.middle,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        right: 5, left: 5),
+                                    child: Align(
+                                        alignment: Alignment.centerRight,
+                                        child: Text(db.currentOrderer!.orders
+                                            .map((order) => order.cost!)
+                                            .reduce((a, b) => a + b)
+                                            .removeTrailingZero())),
+                                  )),
+                            ]),
                           ]),
 
                       // unassigned orders
@@ -263,9 +290,8 @@ class _DetailsPageState extends State<DetailsPage> {
                             const SizedBox(height: 10),
                             Table(
                                 border: TableBorder.all(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onBackground,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                     borderRadius: BorderRadius.circular(5)),
                                 columnWidths: const {
                                   0: FlexColumnWidth(0.5),
